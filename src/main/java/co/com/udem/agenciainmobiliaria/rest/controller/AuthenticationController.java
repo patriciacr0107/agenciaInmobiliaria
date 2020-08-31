@@ -1,6 +1,7 @@
 package co.com.udem.agenciainmobiliaria.rest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,9 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.com.udem.agenciainmobiliaria.repositories.UserRepository;
 import co.com.udem.agenciainmobiliaria.security.jwt.JwtTokenProvider;
+import net.minidev.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.springframework.http.ResponseEntity.ok;
 
@@ -33,18 +33,18 @@ public class AuthenticationController {
     @Autowired
     UserRepository users;
 
-    @PostMapping("/signin")
-    public ResponseEntity signin(@RequestBody AuthenticationRequest data) {
+    @PostMapping(path = "/signin", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> signin(@RequestBody AuthenticationRequest data) {
 
         try {
             String username = data.getUsername();
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, data.getPassword()));
             String token = jwtTokenProvider.createToken(username, this.users.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username " + username + "not found")).getRoles());
 
-            Map<Object, Object> model = new HashMap<>();
-            model.put("username", username);
-            model.put("token", token);
-            return ok(model);
+            JSONObject respuesta = new JSONObject();
+            respuesta.put("username", username);
+            respuesta.put("token", token);
+            return ok(respuesta);
         } catch (AuthenticationException e) {
             throw new BadCredentialsException("Invalid username/password supplied");
         }
